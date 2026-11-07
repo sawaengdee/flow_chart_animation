@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ผังงานมีชีวิต</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#EEF3F9; --surface:#FFFFFF; --ink:#1B2433; --muted:#4E5A6B; --line:#D3DCE8;
+  --edge:#9AA6B6; --edge-on:#1B2433;
+  --term:#C0392B; --term-t:#FBE4E0;
+  --proc:#1F5FAD; --proc-t:#DDE9F8;
+  --io:#2E7D4F;   --io-t:#DCF1E3;
+  --dec:#B7791F;  --dec-t:#FCF0CC; --dec-b:#F2C14E;
+  --code-bg:#14213A; --code-ink:#E7EDF6; --code-dim:#8FA0B8; --code-hl:rgba(242,193,78,.2);
+  --focus:#1F5FAD;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#10151E; --surface:#1A212D; --ink:#EEF2F8; --muted:#A9B4C4; --line:#2E394A;
+    --edge:#5D6A7D; --edge-on:#EEF2F8; --code-bg:#0B111C; --focus:#8CB4EA;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#10151E; --surface:#1A212D; --ink:#EEF2F8; --muted:#A9B4C4; --line:#2E394A;
+  --edge:#5D6A7D; --edge-on:#EEF2F8; --code-bg:#0B111C; --focus:#8CB4EA;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Kanit',system-ui,'Noto Sans Thai',sans-serif;font-size:17px;line-height:1.55}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:8px}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 16px 40px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 20px;margin-bottom:16px}
+h1{margin:0;font-size:clamp(26px,5vw,36px);line-height:1.2;font-weight:600}
+.sub{margin:2px 0 0;color:var(--muted);font-size:15px}
+.switch{display:flex;background:var(--surface);border:2px solid var(--line);border-radius:999px;padding:4px;gap:4px}
+.switch button{border:0;background:transparent;min-height:44px;padding:0 16px;border-radius:999px;cursor:pointer;font-weight:500}
+.switch button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:2px solid var(--line);border-radius:22px;padding:18px}
+.stephead{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.stephead svg{flex:none}
+.kind{margin:0;color:var(--muted);font-size:15px}
+h2{margin:0;font-size:clamp(24px,4.4vw,30px);line-height:1.2;font-weight:600}
+h3{margin:0 0 10px;font-size:19px;font-weight:600}
+
+/* stage: always a light whiteboard so the robot reads the same in dark mode */
+.stage{position:relative;height:280px;border-radius:18px;background:#FFFFFF;border:2px solid #D3DCE8;overflow:hidden;color:#1B2433}
+.stage .floor{position:absolute;left:0;right:0;bottom:0;height:12px;background:#EEF3F9}
+.bot{position:absolute;left:3%;bottom:10px;width:min(27%,128px);height:auto}
+.bot .arm-r{transform-box:fill-box;transform-origin:50% 8%}
+.bubble{position:absolute;left:29%;top:14px;max-width:66%;background:#FFFFFF;border:2.5px solid #1B2433;border-radius:18px;padding:6px 14px;font-size:21px;font-weight:500;line-height:1.35}
+.bubble::before{content:"";position:absolute;left:-12px;top:22px;border:7px solid transparent;border-right:9px solid #1B2433}
+.zone{position:absolute;left:33%;right:4%;top:82px;bottom:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.caption{margin:12px 2px 0;font-size:18px;min-height:56px}
+
+.varbox{position:relative;width:118px;height:86px;border:3px solid var(--io);background:var(--io-t);border-radius:14px;display:flex;align-items:center;justify-content:center}
+.varname{font-size:16px;font-weight:500;color:#2E5E43}
+.tile{min-width:68px;height:56px;padding:0 10px;border-radius:12px;background:#FFFFFF;border:2.5px solid #1B2433;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:600}
+.pill{padding:14px 34px;border-radius:999px;border:4px solid var(--term);background:var(--term-t);font-size:30px;font-weight:600}
+.screen{min-width:70%;padding:16px 22px;border-radius:14px;background:#14213A;color:#FFFFFF;font-size:30px;font-weight:600;text-align:center;border:5px solid #4E5A6B}
+.screen small{display:block;font-size:13px;font-weight:400;color:#B9C6D8;margin-bottom:2px}
+
+.meter{width:100%;max-width:340px;padding-top:30px}
+.track{position:relative;height:30px;border-radius:999px;background:#E3E9F1}
+.fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--proc)}
+.mark{position:absolute;top:-12px;width:4px;height:54px;margin-left:-2px;background:var(--dec);border-radius:2px}
+.mark span{position:absolute;bottom:56px;left:50%;transform:translateX(-50%);font-size:16px;font-weight:600;color:#7A4F0E}
+.scale{display:flex;justify-content:space-between;font-size:13px;color:#4E5A6B;margin-top:4px}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:999px;border:3px solid var(--dec);background:var(--dec-t);font-size:21px;font-weight:600}
+.chip b{padding:0 10px;border-radius:999px;background:#1B2433;color:#FFFFFF;font-weight:600}
+.pairs{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 8px;max-width:100%}
+.pair{display:inline-flex;gap:4px;padding:5px;border-radius:12px;border:2.5px dashed transparent}
+.dot{width:18px;height:18px;border-radius:50%;background:var(--proc)}
+.dot.rest{background:var(--dec-b);box-shadow:0 0 0 0 rgba(183,121,31,.6)}
+.eq{display:flex;align-items:center;gap:10px;font-size:30px;font-weight:600}
+.eq .box{min-width:70px;height:62px;padding:0 10px;border-radius:12px;border:3px solid var(--proc);background:var(--proc-t);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.eq .box small{font-size:13px;font-weight:500;color:#1F4E8A;margin-top:4px}
+.star{position:absolute;width:30px;height:30px}
+
+/* motion */
+.a{animation-fill-mode:both;animation-duration:.5s;animation-timing-function:cubic-bezier(.2,.8,.3,1.2)}
+.pop{animation-name:pop}
+.fade{animation-name:fade;animation-timing-function:ease-out}
+.fly{animation-name:fly;animation-duration:.9s;animation-timing-function:cubic-bezier(.3,.7,.3,1)}
+.grow{animation-name:grow;animation-duration:1.4s;animation-timing-function:ease-in-out}
+.outline{animation-name:outline;animation-duration:.4s}
+.ring{animation:ring 1.2s ease-out 3 both}
+.wave{animation:wave 1.6s ease-in-out both}
+.bounce{animation:bounce .7s ease-in-out 3 both}
+.blink{animation:blink 1s ease-in-out 3 both}
+@keyframes pop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fly{0%{opacity:0;transform:translate(130px,-110px) scale(.6)}25%{opacity:1}100%{opacity:1;transform:none}}
+@keyframes grow{from{width:0}}
+@keyframes outline{from{border-color:transparent}to{border-color:#1F5FAD}}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(183,121,31,.7)}100%{box-shadow:0 0 0 14px rgba(183,121,31,0)}}
+@keyframes wave{0%,100%{transform:none}20%,60%{transform:rotate(-150deg)}40%,80%{transform:rotate(-120deg)}}
+@keyframes bounce{0%,100%{transform:none}50%{transform:translateY(-12px)}}
+@keyframes blink{0%,100%{fill:#F2C14E}50%{fill:#C0392B}}
+
+.controls{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.btn{min-height:46px;padding:0 18px;border-radius:14px;border:2px solid var(--line);background:var(--surface);cursor:pointer;font-weight:500}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.grow1{flex:1 1 180px}
+.value{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-top:14px;padding:12px 14px;border-radius:16px;background:var(--bg)}
+.value label{font-weight:500}
+.value output{min-width:52px;text-align:center;font-size:24px;font-weight:600}
+.value input[type=range]{flex:1 1 180px;accent-color:var(--proc);height:32px}
+.step-btn{width:46px;height:46px;border-radius:12px;border:2px solid var(--line);background:var(--surface);font-size:24px;font-weight:600;cursor:pointer;line-height:1}
+
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tabs button{min-height:44px;padding:0 16px;border-radius:12px;border:2px solid var(--line);background:transparent;cursor:pointer;font-weight:500}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.hint{margin:10px 2px 0;color:var(--muted);font-size:15px}
+
+.blocks{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.blk{display:inline-flex;align-items:center;flex-wrap:wrap;gap:6px;padding:9px 14px;border-radius:10px;color:#FFFFFF;font-weight:500;font-size:17px;transition:box-shadow .2s}
+.blk.hat{border-radius:22px 22px 10px 10px;padding-top:14px}
+.t-term{background:var(--term)} .t-io{background:var(--io)} .t-proc{background:var(--proc)}
+.slot{background:#FFFFFF;color:#1B2433;border-radius:999px;padding:0 10px;font-weight:500}
+.var{background:rgba(255,255,255,.22);border:2px solid rgba(255,255,255,.75);border-radius:999px;padding:0 9px}
+.cblk{display:flex;flex-direction:column;align-items:flex-start;border-radius:10px}
+.cblk .ctop,.cblk .cmid,.cblk .cend{background:var(--dec-b);color:#1B2433;padding:9px 14px;font-weight:500;border-radius:10px 10px 10px 0}
+.cblk .cmid{border-radius:0 10px 10px 0}
+.cblk .cend{height:16px;padding:0;width:120px;border-radius:0 0 10px 10px}
+.cblk .cbody{border-left:16px solid var(--dec-b);padding:6px 0 6px 8px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.cblk .var{background:rgba(255,255,255,.55);border-color:#1B2433}
+.on.blk,.cblk.on{box-shadow:0 0 0 3px var(--surface),0 0 0 7px var(--ink)}
+
+pre.py{margin:0;background:var(--code-bg);color:var(--code-ink);border-radius:14px;padding:12px 0;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,'Kanit',monospace;font-size:15.5px;line-height:1.7}
+.ln{display:flex;padding:0 14px 0 0;border-left:5px solid transparent;white-space:pre}
+.ln i{font-style:normal;width:34px;flex:none;text-align:right;padding-right:12px;color:var(--code-dim);user-select:none}
+.ln.on{background:var(--code-hl);border-left-color:var(--dec-b)}
+.ln .c{color:#9DB0C9}
+
+.flow svg{width:100%;height:auto;display:block;max-width:420px;margin:0 auto}
+.node{cursor:pointer}
+.node .s{stroke-width:2.5}
+.node.t-term .s{fill:var(--term-t);stroke:var(--term)}
+.node.t-io .s{fill:var(--io-t);stroke:var(--io)}
+.node.t-proc .s{fill:var(--proc-t);stroke:var(--proc)}
+.node.t-dec .s{fill:var(--dec-t);stroke:var(--dec)}
+.node text{fill:#1B2433;font-size:14px;font-weight:500;font-family:'Kanit',sans-serif}
+.node.off{opacity:.4}
+.node.on .s{stroke-width:5;animation:pulse 1.4s ease-in-out infinite}
+.node:focus-visible{outline:none}
+.node:focus-visible .s{stroke:var(--focus);stroke-width:5}
+@keyframes pulse{50%{stroke-width:8}}
+.edge{fill:none;stroke:var(--edge);stroke-width:2}
+.edge.done{stroke:var(--edge-on);stroke-width:3}
+.edge.next{stroke:var(--edge-on);stroke-width:3;stroke-dasharray:6 6;animation:dash 1s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-24}}
+.elabel{fill:var(--ink);font-size:13px;font-family:'Kanit',sans-serif}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:10px;color:var(--muted);font-size:14px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:16px;height:16px;border-radius:4px;border:2.5px solid}
+
+@media (prefers-reduced-motion: reduce){
+  .stage *, .node.on .s, .edge.next{animation-duration:.01s !important;animation-delay:0s !important;animation-iteration-count:1 !important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>ผังงานมีชีวิต</h1>
+      <p class="sub">สแกนบัตรแต่ละใบ เพื่อดูว่าขั้นตอนนั้นทำงานอย่างไร</p>
+    </div>
+    <div class="switch" role="group" aria-label="เลือกผังงาน">
+      <button type="button" data-ex="ex1">ตัดสินผลสอบ</button>
+      <button type="button" data-ex="ex2">เลขคู่หรือเลขคี่</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+      <section class="panel" aria-labelledby="stepTitle">
+        <div class="stephead">
+          <svg id="kindIcon" width="56" height="36" viewBox="0 0 56 36" aria-hidden="true"></svg>
+          <div>
+            <p class="kind" id="kindName"></p>
+            <h2 id="stepTitle"></h2>
+          </div>
+        </div>
+        <div class="stage" id="stage"></div>
+        <p class="caption" id="caption" aria-live="polite"></p>
+        <div class="controls">
+          <button class="btn" type="button" id="prevBtn">ขั้นก่อนหน้า</button>
+          <button class="btn" type="button" id="replayBtn">ดูอีกครั้ง</button>
+          <button class="btn" type="button" id="nextBtn">ขั้นถัดไป</button>
+          <button class="btn primary grow1" type="button" id="playBtn">เล่นทั้งผังงาน</button>
+        </div>
+        <div class="value" id="valueBox"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="codeTitle">
+        <h3 id="codeTitle">โค้ดของขั้นตอนนี้</h3>
+        <div class="tabs" role="tablist" aria-label="รูปแบบโค้ด">
+          <button type="button" role="tab" id="tabBlocks" aria-controls="codePanel">บล็อกคำสั่ง</button>
+          <button type="button" role="tab" id="tabPy" aria-controls="codePanel">Python</button>
+        </div>
+        <div id="codePanel" role="tabpanel"></div>
+        <p class="hint" id="codeHint"></p>
+      </section>
+    </div>
+
+    <section class="panel flow" aria-labelledby="flowTitle">
+      <h3 id="flowTitle">ผังงานทั้งหมด</h3>
+      <div id="flow"></div>
+      <div class="legend" aria-hidden="true">
+        <span><i style="border-color:var(--ink);background:var(--surface)"></i>ขั้นที่กำลังดู กะพริบอยู่</span>
+        <span>แตะรูปในผังงานเพื่อไปขั้นนั้น</span>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+  var KIND = {
+    term:{name:'จุดเริ่มต้น / สิ้นสุด'},
+    io:{name:'รับข้อมูล / แสดงผล'},
+    proc:{name:'การประมวลผล'},
+    dec:{name:'การตัดสินใจ'}
+  };
+  var HW = {term:60, io:75, proc:85, dec:75};
+  var HH = {term:20, io:21, proc:21, dec:32};
+
+  var EX = {
+    ex1:{
+      name:'ตัดสินผลสอบ', min:0, max:100, def:72, unit:'คะแนน',
+      sample:{pass:72, fail:35}, vb:[360,384],
+      nodes:{
+        start:{t:'term', l:'เริ่มต้น', x:180, y:30},
+        input:{t:'io', l:'รับค่า คะแนน', x:180, y:100},
+        decision:{t:'dec', l:'คะแนน ≥ 50 ?', x:180, y:182},
+        pass:{t:'io', l:'แสดงผล “ผ่าน”', x:86, y:272},
+        fail:{t:'io', l:'แสดงผล “ไม่ผ่าน”', x:274, y:272},
+        end:{t:'term', l:'จบ', x:180, y:350}
+      },
+      edges:[['start','input'],['input','decision'],['decision','pass','ใช่'],['decision','fail','ไม่ใช่'],['pass','end'],['fail','end']],
+      branch:function(v){ return v >= 50 ? 'pass' : 'fail'; },
+      order:['start','input','decision','BR','end'],
+      blocks:[
+        {s:'start', t:'term', hat:true, h:'เมื่อเริ่มโปรแกรม'},
+        {s:'input', t:'io', h:'ถาม <span class="slot">คะแนนเท่าไร?</span> แล้วเก็บใน <span class="var">คะแนน</span>'},
+        {s:'decision', cond:true, h:'ถ้า <span class="var">คะแนน</span> ≥ <span class="slot">50</span> แล้ว',
+          yes:[{s:'pass', t:'io', h:'พูด <span class="slot">ผ่าน</span>'}],
+          no:[{s:'fail', t:'io', h:'พูด <span class="slot">ไม่ผ่าน</span>'}]},
+        {s:'end', t:'term', h:'หยุดทำงาน'}
+      ],
+      py:[
+        ['start','<span class="c"># เริ่มต้น</span>'],
+        ['input','score = int(input("คะแนนเท่าไร? "))'],
+        ['decision','if score &gt;= 50:'],
+        ['pass','    print("ผ่าน")'],
+        ['decision','else:'],
+        ['fail','    print("ไม่ผ่าน")'],
+        ['end','<span class="c"># จบ</span>']
+      ],
+      caption:{
+        start:function(){ return 'บัตรวงรีบอกว่า โปรแกรมเริ่มทำงานตรงนี้'; },
+        input:function(v){ return 'โปรแกรมถามคะแนน แล้วเก็บเลข ' + v + ' ไว้ในกล่องชื่อ “คะแนน”'; },
+        decision:function(v){ return 'โปรแกรมดูว่า ' + v + ' ถึง 50 หรือไม่ ถ้าถึงไปทาง “ใช่” ถ้าไม่ถึงไปทาง “ไม่ใช่”'; },
+        pass:function(v){ return v + ' ถึง 50 โปรแกรมจึงแสดงคำว่า “ผ่าน” บนหน้าจอ'; },
+        fail:function(v){ return v + ' ไม่ถึง 50 โปรแกรมจึงแสดงคำว่า “ไม่ผ่าน” บนหน้าจอ'; },
+        end:function(){ return 'บัตรวงรีอีกใบบอกว่า โปรแกรมทำงานเสร็จแล้ว'; }
+      }
+    },
+    ex2:{
+      name:'เลขคู่หรือเลขคี่', min:1, max:20, def:7, unit:'N',
+      sample:{even:8, odd:7}, vb:[360,428],
+      nodes:{
+        start:{t:'term', l:'เริ่มต้น', x:180, y:30},
+        input:{t:'io', l:'รับค่า N', x:180, y:96},
+        process:{t:'proc', l:'คำนวณเศษของ N ÷ 2', x:180, y:162},
+        decision:{t:'dec', l:'เศษ = 0 ?', x:180, y:238},
+        even:{t:'io', l:'แสดงผล “เลขคู่”', x:86, y:322},
+        odd:{t:'io', l:'แสดงผล “เลขคี่”', x:274, y:322},
+        end:{t:'term', l:'จบ', x:180, y:396}
+      },
+      edges:[['start','input'],['input','process'],['process','decision'],['decision','even','ใช่'],['decision','odd','ไม่ใช่'],['even','end'],['odd','end']],
+      branch:function(v){ return v % 2 === 0 ? 'even' : 'odd'; },
+      order:['start','input','process','decision','BR','end'],
+      blocks:[
+        {s:'start', t:'term', hat:true, h:'เมื่อเริ่มโปรแกรม'},
+        {s:'input', t:'io', h:'ถาม <span class="slot">ตัวเลขอะไร?</span> แล้วเก็บใน <span class="var">N</span>'},
+        {s:'process', t:'proc', h:'ให้ <span class="var">เศษ</span> = เศษของ <span class="var">N</span> ÷ <span class="slot">2</span>'},
+        {s:'decision', cond:true, h:'ถ้า <span class="var">เศษ</span> = <span class="slot">0</span> แล้ว',
+          yes:[{s:'even', t:'io', h:'พูด <span class="slot">เลขคู่</span>'}],
+          no:[{s:'odd', t:'io', h:'พูด <span class="slot">เลขคี่</span>'}]},
+        {s:'end', t:'term', h:'หยุดทำงาน'}
+      ],
+      py:[
+        ['start','<span class="c"># เริ่มต้น</span>'],
+        ['input','n = int(input("ตัวเลขอะไร? "))'],
+        ['process','r = n % 2'],
+        ['decision','if r == 0:'],
+        ['even','    print("เลขคู่")'],
+        ['decision','else:'],
+        ['odd','    print("เลขคี่")'],
+        ['end','<span class="c"># จบ</span>']
+      ],
+      caption:{
+        start:function(){ return 'บัตรวงรีบอกว่า โปรแกรมเริ่มทำงานตรงนี้'; },
+        input:function(v){ return 'โปรแกรมถามตัวเลข แล้วเก็บเลข ' + v + ' ไว้ในกล่องชื่อ “N”'; },
+        process:function(v){ return 'โปรแกรมจับลูกบอล ' + v + ' ลูก เป็นคู่ คู่ละ 2 ลูก แล้วดูว่าเหลือเศษกี่ลูก'; },
+        decision:function(v){ return 'เศษคือ ' + (v % 2) + (v % 2 === 0 ? ' จับคู่ได้หมดพอดี จึงไปทาง “ใช่”' : ' ยังเหลือเศษ จึงไปทาง “ไม่ใช่”'); },
+        even:function(v){ return v + ' จับคู่ได้หมดพอดี จึงเป็นเลขคู่'; },
+        odd:function(v){ return v + ' จับคู่แล้วเหลือ 1 ลูก จึงเป็นเลขคี่'; },
+        end:function(){ return 'บัตรวงรีอีกใบบอกว่า โปรแกรมทำงานเสร็จแล้ว'; }
+      }
+    }
+  };
+
+  var S = {ex:'ex1', step:'start', v:{ex1:72, ex2:7}, tab:'blocks', playing:false, timer:null};
+
+  function $(id){ return document.getElementById(id); }
+  function pathFor(exId, v){
+    var ex = EX[exId];
+    return ex.order.map(function(s){ return s === 'BR' ? ex.branch(v) : s; });
+  }
+
+  function parseHash(){
+    var h = (location.hash || '').slice(1);
+    var m = /^(ex1|ex2)(?:-([a-z]+))?$/.exec(h);
+    if(!m){ return; }
+    S.ex = m[1];
+    var ex = EX[S.ex];
+    var st = m[2] && ex.nodes[m[2]] ? m[2] : 'start';
+    S.step = st;
+    if(ex.sample[st] !== undefined && ex.branch(S.v[S.ex]) !== st){ S.v[S.ex] = ex.sample[st]; }
+  }
+
+  function setHash(){
+    try{ history.replaceState(null, '', '#' + S.ex + '-' + S.step); }catch(e){}
+  }
+  function go(step){
+    stop();
+    S.step = step;
+    if(location.hash !== '#' + S.ex + '-' + step){ location.hash = S.ex + '-' + step; }
+    else { render(); }
+  }
+
+  /* ---------- shapes ---------- */
+  function shapeMarkup(t, x, y, cls){
+    cls = cls || 's';
+    if(t === 'term') return '<rect class="'+cls+'" x="'+(x-60)+'" y="'+(y-20)+'" width="120" height="40" rx="20"/>';
+    if(t === 'io') return '<polygon class="'+cls+'" points="'+(x-61)+','+(y-21)+' '+(x+75)+','+(y-21)+' '+(x+61)+','+(y+21)+' '+(x-75)+','+(y+21)+'"/>';
+    if(t === 'proc') return '<rect class="'+cls+'" x="'+(x-85)+'" y="'+(y-21)+'" width="170" height="42" rx="4"/>';
+    return '<polygon class="'+cls+'" points="'+x+','+(y-32)+' '+(x+75)+','+y+' '+x+','+(y+32)+' '+(x-75)+','+y+'"/>';
+  }
+  function iconMarkup(t){
+    var c = {term:['var(--term-t)','var(--term)'], io:['var(--io-t)','var(--io)'], proc:['var(--proc-t)','var(--proc)'], dec:['var(--dec-t)','var(--dec)']}[t];
+    var st = 'fill:'+c[0]+';stroke:'+c[1]+';stroke-width:3';
+    if(t === 'term') return '<rect x="3" y="5" width="50" height="26" rx="13" style="'+st+'"/>';
+    if(t === 'io') return '<polygon points="13,5 53,5 43,31 3,31" style="'+st+'"/>';
+    if(t === 'proc') return '<rect x="3" y="5" width="50" height="26" rx="3" style="'+st+'"/>';
+    return '<polygon points="28,2 53,18 28,34 3,18" style="'+st+'"/>';
+  }
+
+  /* ---------- flowchart ---------- */
+  function edgeGeom(ex, a, b){
+    var A = ex.nodes[a], B = ex.nodes[b];
+    var bTop = B.y - HH[B.t] - 2;
+    if(A.t === 'dec' && B.x !== A.x){
+      var left = B.x < A.x;
+      var sx = A.x + (left ? -HW.dec : HW.dec);
+      return {d:'M'+sx+' '+A.y+' H'+B.x+' V'+bTop, lx:B.x + (left ? -8 : 8), ly:(A.y + bTop)/2 + 6, anchor:left ? 'end' : 'start'};
+    }
+    if(A.x !== B.x){
+      var ym = B.y - HH[B.t] - 14;
+      return {d:'M'+A.x+' '+(A.y + HH[A.t])+' V'+ym+' H'+B.x+' V'+bTop};
+    }
+    return {d:'M'+A.x+' '+(A.y + HH[A.t])+' V'+bTop};
+  }
+  function renderFlow(){
+    var ex = EX[S.ex], v = S.v[S.ex];
+    var path = pathFor(S.ex, v), idx = path.indexOf(S.step);
+    var out = '<svg viewBox="0 0 '+ex.vb[0]+' '+ex.vb[1]+'" role="group" aria-label="ผังงาน '+ex.name+'">';
+    out += '<defs>'
+      + '<marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--edge)"/></marker>'
+      + '<marker id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--edge-on)"/></marker>'
+      + '</defs>';
+    ex.edges.forEach(function(e){
+      var g = edgeGeom(ex, e[0], e[1]);
+      var ia = path.indexOf(e[0]), ib = path.indexOf(e[1]);
+      var cls = 'edge';
+      if(ia > -1 && ib === ia + 1){
+        if(ib <= idx) cls += ' done';
+        else if(ia === idx) cls += ' next';
+      }
+      var on = cls !== 'edge';
+      out += '<path class="'+cls+'" d="'+g.d+'" marker-end="url(#'+(on ? 'ah2' : 'ah')+')"/>';
+      if(e[2]) out += '<text class="elabel" x="'+g.lx+'" y="'+g.ly+'" text-anchor="'+g.anchor+'">'+e[2]+'</text>';
+    });
+    Object.keys(ex.nodes).forEach(function(k){
+      var n = ex.nodes[k];
+      var cls = 'node t-' + n.t;
+      if(k === S.step) cls += ' on';
+      else if(path.indexOf(k) === -1) cls += ' off';
+      out += '<g class="'+cls+'" data-step="'+k+'" tabindex="0" role="button" aria-label="ไปที่ขั้น '+n.l+'"'+(k === S.step ? ' aria-current="step"' : '')+'>'
+        + shapeMarkup(n.t, n.x, n.y)
+        + '<text x="'+n.x+'" y="'+(n.y + 5)+'" text-anchor="middle">'+n.l+'</text></g>';
+    });
+    out += '</svg>';
+    $('flow').innerHTML = out;
+  }
+
+  /* ---------- code ---------- */
+  function blk(b){
+    if(b.cond){
+      var yes = b.yes.map(blk).join(''), no = b.no.map(blk).join('');
+      return '<div class="cblk'+(S.step === b.s ? ' on' : '')+'" data-step="'+b.s+'">'
+        + '<div class="ctop">'+b.h+'</div><div class="cbody">'+yes+'</div>'
+        + '<div class="cmid">มิฉะนั้น</div><div class="cbody">'+no+'</div><div class="cend"></div></div>';
+    }
+    return '<div class="blk t-'+b.t+(b.hat ? ' hat' : '')+(S.step === b.s ? ' on' : '')+'" data-step="'+b.s+'">'+b.h+'</div>';
+  }
+  function renderCode(){
+    var ex = EX[S.ex];
+    var blocksTab = S.tab === 'blocks';
+    $('tabBlocks').setAttribute('aria-selected', blocksTab);
+    $('tabPy').setAttribute('aria-selected', !blocksTab);
+    $('tabBlocks').tabIndex = blocksTab ? 0 : -1;
+    $('tabPy').tabIndex = blocksTab ? -1 : 0;
+    $('codePanel').setAttribute('aria-labelledby', blocksTab ? 'tabBlocks' : 'tabPy');
+    if(blocksTab){
+      $('codePanel').innerHTML = '<div class="blocks">' + ex.blocks.map(blk).join('') + '</div>';
+      $('codeHint').textContent = 'บล็อกที่มีกรอบเข้มคือคำสั่งของบัตรนี้ สีของบล็อกตรงกับสีของรูปในผังงาน';
+    } else {
+      $('codePanel').innerHTML = '<pre class="py"><code>' + ex.py.map(function(l, i){
+        return '<span class="ln'+(l[0] === S.step ? ' on' : '')+'"><i>'+(i+1)+'</i>'+l[1]+'</span>';
+      }).join('') + '</code></pre>';
+      $('codeHint').textContent = 'บรรทัดที่มีแถบเหลืองคือโค้ดของบัตรนี้ บรรทัดที่ขึ้นต้นด้วย # เป็นหมายเหตุ คอมพิวเตอร์จะไม่ทำงานตามบรรทัดนั้น';
+    }
+  }
+
+  /* ---------- stage ---------- */
+  var BOT = function(armCls, botCls){
+    return '<svg class="bot'+(botCls ? ' '+botCls : '')+'" viewBox="0 0 120 150" aria-hidden="true">'
+      + '<line x1="60" y1="10" x2="60" y2="26" stroke="#1B2433" stroke-width="4"/>'
+      + '<circle cx="60" cy="9" r="7" fill="#F2C14E" class="ant"/>'
+      + '<rect x="20" y="24" width="80" height="62" rx="20" fill="#1F5FAD"/>'
+      + '<rect x="30" y="36" width="60" height="38" rx="12" fill="#DDE9F8"/>'
+      + '<circle cx="47" cy="54" r="6" fill="#1B2433"/><circle cx="73" cy="54" r="6" fill="#1B2433"/>'
+      + '<path d="M50 65 Q60 73 70 65" stroke="#1B2433" stroke-width="3" fill="none" stroke-linecap="round"/>'
+      + '<rect x="12" y="96" width="14" height="34" rx="7" fill="#1F5FAD"/>'
+      + '<rect class="arm-r '+(armCls || '')+'" x="94" y="96" width="14" height="34" rx="7" fill="#1F5FAD"/>'
+      + '<rect x="32" y="92" width="56" height="44" rx="12" fill="#1F5FAD"/>'
+      + '<rect x="50" y="104" width="20" height="14" rx="4" fill="#F2C14E"/>'
+      + '<rect x="38" y="136" width="14" height="12" rx="4" fill="#1B2433"/><rect x="68" y="136" width="14" height="12" rx="4" fill="#1B2433"/>'
+      + '</svg>';
+  };
+  function d(s){ return 'style="animation-delay:'+s+'s"'; }
+  function bubble(text, delay){ return '<div class="bubble a pop" '+d(delay || 0.1)+'>'+text+'</div>'; }
+  function stars(n, delay){
+    var spots = [[40,30],[78,22],[90,58],[58,12],[70,70],[46,62]];
+    var out = '';
+    for(var i = 0; i < n; i++){
+      var p = spots[i % spots.length];
+      out += '<svg class="star a pop" viewBox="0 0 24 24" aria-hidden="true" style="left:'+p[0]+'%;top:'+p[1]+'%;animation-delay:'+(delay + i*0.12)+'s"><polygon points="12,1 15,9 23,9 16.5,14 19,22 12,17 5,22 7.5,14 1,9 9,9" fill="#F2C14E" stroke="#B7791F" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+    }
+    return out;
+  }
+  function scene(){
+    var ex = EX[S.ex], v = S.v[S.ex], st = S.step, n = ex.nodes[st];
+    var floor = '<div class="floor"></div>';
+    if(st === 'start'){
+      return floor + BOT('wave') + bubble('เริ่มทำงานกันเลย!')
+        + '<div class="zone"><div class="pill a pop" '+d(0.7)+'>เริ่มต้น</div></div>';
+    }
+    if(st === 'end'){
+      return floor + BOT('wave') + bubble('เสร็จแล้ว บ๊ายบาย!')
+        + '<div class="zone"><div class="pill a pop" '+d(0.7)+'>จบ</div></div>';
+    }
+    if(st === 'input'){
+      var ask = S.ex === 'ex1' ? 'คะแนนเท่าไร?' : 'ตัวเลขอะไร?';
+      return floor + BOT() + bubble(ask)
+        + '<div class="zone"><div class="varbox"><div class="tile a fly" '+d(1.1)+'>'+v+'</div></div>'
+        + '<div class="varname a fade" '+d(0.5)+'>กล่องชื่อ “'+ex.unit+'”</div></div>';
+    }
+    if(st === 'decision' && S.ex === 'ex1'){
+      var yes = v >= 50;
+      return floor + BOT() + bubble(v + ' ถึง 50 ไหมนะ?')
+        + '<div class="zone"><div class="meter"><div class="track">'
+        + '<div class="fill a grow" style="width:'+v+'%;animation-delay:.6s"></div>'
+        + '<div class="mark" style="left:50%"><span>50</span></div></div>'
+        + '<div class="scale"><span>0</span><span>100</span></div></div>'
+        + '<div class="chip a pop" '+d(2.2)+'>'+v+' ≥ 50 ? <b>'+(yes ? 'ใช่' : 'ไม่ใช่')+'</b></div></div>';
+    }
+    if(st === 'process'){
+      var pairs = Math.floor(v / 2), rest = v % 2, out = '', k = 0;
+      var tPairs = 0.4 + v * 0.07 + 0.2;
+      for(var i = 0; i < pairs; i++){
+        out += '<span class="pair a outline" '+d(tPairs + i*0.08)+'>'
+          + '<span class="dot a pop" '+d(0.4 + (k++)*0.07)+'></span>'
+          + '<span class="dot a pop" '+d(0.4 + (k++)*0.07)+'></span></span>';
+      }
+      if(rest){ out += '<span class="pair"><span class="dot rest a pop" '+d(0.4 + k*0.07)+'></span></span>'; }
+      var tChip = tPairs + pairs*0.08 + 0.5;
+      return floor + BOT() + bubble('จับคู่ทีละ 2 นะ')
+        + '<div class="zone"><div class="pairs">'+out+'</div>'
+        + (rest ? '<div class="a fade" '+d(tChip)+'><span class="dot rest ring" style="display:inline-block;vertical-align:middle;margin-right:8px;animation-delay:'+tChip+'s"></span>เหลือ 1 ลูก</div>' : '')
+        + '<div class="chip a pop" '+d(tChip + 0.3)+'>เศษ = '+rest+'</div></div>';
+    }
+    if(st === 'decision' && S.ex === 'ex2'){
+      var r = v % 2;
+      return floor + BOT() + bubble('เศษเป็น 0 ไหมนะ?')
+        + '<div class="zone"><div class="eq">'
+        + '<span class="box a pop" '+d(0.5)+'>'+r+'<small>เศษ</small></span>'
+        + '<span class="a fade" '+d(0.9)+'>=</span>'
+        + '<span class="box a pop" '+d(1.2)+'>0</span>'
+        + '<span class="a fade" '+d(1.5)+'>?</span></div>'
+        + '<div class="chip a pop" '+d(2.1)+'>คำตอบคือ <b>'+(r === 0 ? 'ใช่' : 'ไม่ใช่')+'</b></div></div>';
+    }
+    /* outputs */
+    var good = (st === 'pass' || st === 'even' || st === 'odd');
+    var word = {pass:'ผ่าน', fail:'ไม่ผ่าน', even:'เลขคู่', odd:'เลขคี่'}[st];
+    var say = {pass:'ผ่าน! เก่งมาก', fail:'ไม่ผ่าน ลองใหม่นะ', even: v + ' เป็นเลขคู่!', odd: v + ' เป็นเลขคี่!'}[st];
+    return floor + BOT(good ? 'wave' : '', good ? 'bounce' : '') + bubble(say, 1.0)
+      + '<div class="zone"><div class="screen a pop" '+d(0.3)+'><small>หน้าจอแสดงผล</small>'+word+'</div></div>'
+      + (good ? stars(5, 1.2) : '');
+  }
+  function renderStage(){
+    var ex = EX[S.ex], n = ex.nodes[S.step];
+    $('kindIcon').innerHTML = iconMarkup(n.t);
+    $('kindName').textContent = 'บัตรนี้คือ ' + KIND[n.t].name;
+    $('stepTitle').textContent = n.l;
+    $('stage').innerHTML = scene();
+    $('stage').setAttribute('aria-label', 'ภาพเคลื่อนไหวของขั้น ' + n.l);
+    $('caption').textContent = ex.caption[S.step](S.v[S.ex]);
+  }
+
+  /* ---------- controls ---------- */
+  function renderControls(){
+    var ex = EX[S.ex], v = S.v[S.ex];
+    var path = pathFor(S.ex, v), i = path.indexOf(S.step);
+    $('prevBtn').disabled = i <= 0;
+    $('nextBtn').disabled = i >= path.length - 1;
+    $('playBtn').textContent = S.playing ? 'หยุด' : 'เล่นทั้งผังงาน';
+    document.querySelectorAll('.switch button').forEach(function(b){
+      b.setAttribute('aria-pressed', b.getAttribute('data-ex') === S.ex);
+    });
+    var box = $('valueBox');
+    if(box.getAttribute('data-ex') !== S.ex){
+      box.setAttribute('data-ex', S.ex);
+      if(S.ex === 'ex1'){
+        box.innerHTML = '<label for="valIn">ลองเปลี่ยนคะแนน</label>'
+          + '<input id="valIn" type="range" min="0" max="100" step="1">'
+          + '<output id="valOut" for="valIn"></output>';
+        $('valIn').addEventListener('input', function(){ setValue(+this.value); });
+      } else {
+        box.innerHTML = '<span id="nLabel" style="font-weight:500">ลองเปลี่ยนตัวเลข N</span>'
+          + '<button class="step-btn" type="button" id="minus" aria-label="ลดลง 1">−</button>'
+          + '<output id="valOut" aria-labelledby="nLabel"></output>'
+          + '<button class="step-btn" type="button" id="plus" aria-label="เพิ่มขึ้น 1">+</button>';
+        $('minus').addEventListener('click', function(){ setValue(Math.max(1, S.v.ex2 - 1)); });
+        $('plus').addEventListener('click', function(){ setValue(Math.min(20, S.v.ex2 + 1)); });
+      }
+    }
+    if($('valIn')) $('valIn').value = v;
+    $('valOut').textContent = v;
+  }
+  function setValue(val){
+    var ex = EX[S.ex];
+    S.v[S.ex] = val;
+    if(ex.sample[S.step] !== undefined){ S.step = ex.branch(val); setHash(); }
+    render();
+  }
+
+  function stepDuration(){
+    var v = S.v[S.ex];
+    if(S.step === 'process') return 2600 + v * 80;
+    if(S.step === 'decision') return 3800;
+    return 3200;
+  }
+  function stop(){
+    clearTimeout(S.timer);
+    if(S.playing){ S.playing = false; setHash(); renderControls(); }
+  }
+  function tick(){
+    S.timer = setTimeout(function(){
+      var path = pathFor(S.ex, S.v[S.ex]), i = path.indexOf(S.step);
+      if(i < path.length - 1){ S.step = path[i + 1]; render(); tick(); }
+      else { stop(); }
+    }, stepDuration());
+  }
+  function play(){
+    if(S.playing){ stop(); return; }
+    S.playing = true;
+    S.step = 'start';
+    render();
+    tick();
+  }
+
+  function render(){
+    renderStage();
+    renderFlow();
+    renderCode();
+    renderControls();
+  }
+
+  /* ---------- events ---------- */
+  document.querySelectorAll('.switch button').forEach(function(b){
+    b.addEventListener('click', function(){
+      stop();
+      S.ex = b.getAttribute('data-ex');
+      S.step = 'start';
+      location.hash = S.ex + '-start';
+      render();
+    });
+  });
+  $('prevBtn').addEventListener('click', function(){
+    var p = pathFor(S.ex, S.v[S.ex]), i = p.indexOf(S.step);
+    if(i > 0) go(p[i - 1]);
+  });
+  $('nextBtn').addEventListener('click', function(){
+    var p = pathFor(S.ex, S.v[S.ex]), i = p.indexOf(S.step);
+    if(i < p.length - 1) go(p[i + 1]);
+  });
+  $('replayBtn').addEventListener('click', function(){ stop(); renderStage(); });
+  $('playBtn').addEventListener('click', play);
+  $('tabBlocks').addEventListener('click', function(){ S.tab = 'blocks'; renderCode(); });
+  $('tabPy').addEventListener('click', function(){ S.tab = 'py'; renderCode(); });
+  document.querySelector('.tabs').addEventListener('keydown', function(e){
+    if(e.key === 'ArrowRight' || e.key === 'ArrowLeft'){
+      S.tab = S.tab === 'blocks' ? 'py' : 'blocks';
+      renderCode();
+      (S.tab === 'blocks' ? $('tabBlocks') : $('tabPy')).focus();
+    }
+  });
+  function nodeGo(e){
+    var g = e.target.closest && e.target.closest('.node');
+    if(!g) return;
+    var st = g.getAttribute('data-step');
+    var ex = EX[S.ex];
+    if(ex.sample[st] !== undefined && ex.branch(S.v[S.ex]) !== st){ S.v[S.ex] = ex.sample[st]; }
+    go(st);
+  }
+  $('flow').addEventListener('click', nodeGo);
+  $('flow').addEventListener('keydown', function(e){
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); nodeGo(e); }
+  });
+  window.addEventListener('hashchange', function(){ stop(); parseHash(); render(); });
+
+  parseHash();
+  render();
+})();
+</script>
+</body>
+</html>
